@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import uuid from 'uuid';
 import Task from './Task';
+import Edit from './Edit';
 import Add from './Add';
 
 const Todo = () => {
   const [state, setState] = useState({
     tasks: [],
     current: '',
+    edit: null,
   });
+  const textRef = useRef(null);
 
   const onChange = (e) => setState({ ...state, current: e.target.value });
 
@@ -19,9 +22,25 @@ const Todo = () => {
   const deleteTask = (e) => {
     setState({
       ...state,
-      tasks: state.tasks.filter(
-        (task) => task !== e.target.parentElement.firstChild.innerText
-      ),
+      tasks: state.tasks.splice(parseInt(e.target.parentElement.id), 1),
+    });
+  };
+
+  const setCurrentTask = (e) =>
+    setState({ ...state, edit: parseInt(e.target.id) });
+
+  const handleEdit = (e) => {
+    e.preventDefault();
+    setState({
+      ...state,
+      tasks: state.tasks.map((task, index) => {
+        if (index === parseInt(e.target.id)) {
+          return textRef.current.value;
+        } else {
+          return task;
+        }
+      }),
+      edit: null,
     });
   };
 
@@ -36,9 +55,28 @@ const Todo = () => {
         {state.tasks.length === 0 && (
           <h5 className='text-center text-primary'>Add a Task</h5>
         )}
-        {state.tasks.map((task) => (
-          <Task key={uuid.v4()} task={task} deleteTask={deleteTask} />
-        ))}
+        {state.tasks.map((task, index) => {
+          if (state.edit !== index) {
+            return (
+              <Task
+                id={index}
+                key={uuid.v4()}
+                task={task}
+                deleteTask={deleteTask}
+                setCurrentTask={setCurrentTask}
+              />
+            );
+          } else {
+            return (
+              <Edit
+                id={index}
+                key={uuid.v4()}
+                handleEdit={handleEdit}
+                textRef={textRef}
+              />
+            );
+          }
+        })}
       </ul>
     </div>
   );
